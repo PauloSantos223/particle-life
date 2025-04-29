@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Particle Life - Laser Show? / Explosions</title>
+</head>
+<body>
+    
+    <canvas width="800" height="600"></canvas>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+
+    <script>
+
+        var canvas = document.querySelector("canvas");
+        var c = canvas.getContext("2d");
+
+        // Particle Constructor for fireworks effect
+        var Particle = function(color, x, y) {
+            this.color = color;
+            this.x = x;
+            this.y = y;
+            this.vx = (Math.random() - 0.5) * 10;  // Increased velocity for that burst effect
+            this.vy = (Math.random() - 0.5) * 10;
+            this.history = [];
+            this.life = 100;  // Particle lifespan
+
+            this.updateHistory = () => {
+                this.history.push({ x: this.x, y: this.y });
+                if (this.history.length > 10) {
+                    this.history.shift();
+                }
+            };
+
+            this.draw = () => {
+                c.beginPath();
+                c.moveTo(this.history[0].x, this.history[0].y);
+                for (var i = 1; i < this.history.length; i++) {
+                    c.lineTo(this.history[i].x, this.history[i].y);
+                }
+                c.strokeStyle = this.color;
+                c.lineWidth = 2;
+                c.shadowBlur = 1;
+                c.shadowColor = "white";
+                c.stroke();
+                c.closePath();
+            };
+
+            this.update = () => {
+                if (this.life <= 0) return; // Stop updating if the particle is dead
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vx *= 10;  
+                this.vy *= 10;
+                this.life--;
+                this.updateHistory();
+            };
+        }
+
+        var particles = [];
+
+        function createExplosion(x, y) {
+            const colors = ["aqua", "red", "yellow", "purple", "green"];
+            for (var i = 0; i < 100; i++) {
+                var color = colors[Math.floor(Math.random() * colors.length)];
+                particles.push(new Particle(color, x, y));
+            }
+        }
+
+        function draw() {
+            for (var p in particles) {
+                particles[p].update();  
+                particles[p].draw();    
+            }
+        }
+
+        function applyRule(color1, color2, A, B) {
+            for (var p in particles) {
+                let f = 0;
+                let fx = 0;
+                let fy = 0;
+
+                let a = particles[p];
+
+                if (a.color != color1) continue;
+
+                for (var pp in particles) {
+                    if (p == pp) continue;
+
+                    let b = particles[pp];
+
+                    if (b.color != color2) continue;
+
+                    let dx = a.x - b.x;
+                    let dy = a.y - b.y;
+                    let d = Math.sqrt(dx * dx + dy * dy);
+
+                    if (d > 0 && d < B) {
+                        f = A * 1 / d;
+                        fx += f * dx;
+                        fy += f * dy;
+                    }
+                }
+
+                particles[p].vx = (particles[p].vx + fx) / 10;
+                particles[p].vy = (particles[p].vy + fy) / 10;
+            }
+        }
+
+        function loop() {
+            c.clearRect(0, 0, canvas.width, canvas.height);
+            c.fillStyle = 'rgba(0, 0, 0, 1)';
+            c.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Randomly create explosions
+            if (Math.random() > 0.99) {
+                createExplosion(Math.random() * canvas.width, Math.random() * canvas.height);
+            }
+
+            // Apply rules
+            applyRule('aqua', 'red', 2, -50);  // Repulsion to create distance
+            applyRule('yellow', 'purple', -10, 1);  // Repulsion to create distance
+
+            draw();
+
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+
+    </script>
+</body>
+</html>
+

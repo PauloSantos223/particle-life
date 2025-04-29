@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Particle Life - 2 - Ballpit effect?</title>
+</head>
+<body>
+    
+    <canvas width="800" height="600"></canvas>
+    <style>
+        canvas {
+            border:1px solid black;
+        }
+    </style>
+
+    <script>
+
+        var canvas = document.querySelector("canvas");
+        var c = canvas.getContext("2d");
+
+        // Particle Ballpit
+        var Particle = function(color, x, y, radius) {
+            this.color = color;
+            this.x = x;
+            this.y = y;
+            this.radius = radius;
+            this.vx = (Math.random() - 0.5) * 4;  
+            this.vy = (Math.random() - 0.5) * 4;  
+            this.gravity = 0.1;  
+            this.friction = 0.99; 
+
+            // Draws the circle method
+            this.draw = () => {
+                c.beginPath();
+                c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+                c.fillStyle = this.color;
+                c.fill();
+                c.closePath();
+            }
+
+            // Update position and velocity
+            this.update = () => {
+                this.vy += this.gravity;
+
+                // Checks for collisions with walls and the floor
+                if (this.y + this.radius + this.vy > canvas.height) {
+                    this.vy = -this.vy * this.friction; 
+                    this.y = canvas.height - this.radius; 
+                } else {
+                    this.y += this.vy;
+                }
+
+                if (this.x + this.radius + this.vx > canvas.width || this.x - this.radius < 0) {
+                    this.vx = -this.vx * this.friction; 
+                }
+
+                this.x += this.vx; 
+
+                this.draw(); 
+            }
+        }
+
+        var particles = [];
+
+        // Function to create particles
+        function create(number, color, radius) {
+            for (var i = 0; i < number; i++) {
+                particles.push(
+                    new Particle(
+                        color,
+                        Math.random() * canvas.width,
+                        Math.random() * canvas.height,
+                        radius
+                    )
+                );
+            }
+        }
+
+        // DO STUFF
+        create(50, "aqua", 10);
+        create(50, "red", 12);
+        create(50, "yellow", 8);
+        create(50, "purple", 14);
+
+        
+        function draw() {
+            for (var p in particles) {
+                particles[p].update(); // Update position and render the particle
+            }
+        }
+
+        // Animation loop
+        function loop() {
+            c.clearRect(0, 0, canvas.width, canvas.height); 
+
+            draw(); 
+
+            requestAnimationFrame(loop); 
+        }
+
+        
+        loop();
+
+    </script>
+</body>
+</html>
